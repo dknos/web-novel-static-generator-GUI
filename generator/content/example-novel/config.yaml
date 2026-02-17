@@ -1,0 +1,57 @@
+# Example story configuration
+# See the generator README for all available options.
+
+title: "Example Novel"
+description: "A sample novel to demonstrate the generator features."
+slug: "example-novel"
+primary_language: "en"
+status: "ongoing"
+
+# Languages available for this story
+languages:
+  en:
+    label: "English"
+  # jp:
+  #   label: "Japanese"
+
+# Author reference (must match a key in authors.yaml)
+author: "original-author"
+
+# Copyright notice
+copyright: "Example Author"
+
+# Tag system
+tags:
+  - fantasy
+  - adventure
+
+# Table of contents display
+display:
+  show_tags: true
+  show_published_date: true
+
+# Navigation
+navigation:
+  show_chapter_dropdown: true
+  show_breadcrumbs: true
+
+# Downloads
+downloads:
+  epub: true
+
+# Comments
+comments:
+  enabled: true
+
+# Glossary (optional — create glossary.yaml in this directory to use)
+# glossary:
+#   enabled: true
+#   auto_link: true
+#   show_in_navigation: true
+
+# Typography (optional — override reader defaults)
+# typography:
+#   font_family: "Georgia, serif"
+#   font_size: 18
+#   line_height: 1.8
+#   max_width: 700

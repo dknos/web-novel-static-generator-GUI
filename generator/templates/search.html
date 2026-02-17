@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search - {{ site_name }}</title>
+    <link rel="icon" type="image/png" href="static/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="static/favicon.svg" />
+    <link rel="shortcut icon" href="static/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="static/apple-touch-icon.png" />
+    <link rel="stylesheet" href="static/{{ 'style.css' | asset_url }}">
+
+    {% if not allow_indexing %}
+    <meta name="robots" content="noindex, nofollow">
+    {% endif %}
+
+    <!-- Theme Toggle Script -->
+    <script src="static/{{ 'theme-toggle.js' | asset_url }}"></script>
+    <!-- lunr.js for client-side search -->
+    <script src="https://unpkg.com/lunr/lunr.js"></script>
+    <script src="static/{{ 'search.js' | asset_url }}"></script>
+</head>
+<body>
+    <header>
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a href="./">Home</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="current-page">Search</span>
+        </nav>
+        <h1>Search</h1>
+    </header>
+    <main>
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="search-input" class="search-input" placeholder="Search chapters..." autofocus aria-label="Search">
+            </div>
+            <div class="search-filters">
+                <select id="filter-story" aria-label="Filter by story">
+                    <option value="">All Stories</option>
+                    {% for novel in novels %}
+                    <option value="{{ novel.slug }}">{{ novel.title }}</option>
+                    {% endfor %}
+                </select>
+                <select id="filter-language" aria-label="Filter by language">
+                    <option value="">All Languages</option>
+                    {% for lang in languages %}
+                    <option value="{{ lang }}">{{ lang|upper }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="search-results" class="search-results"></div>
+        </div>
+    </main>
+    <footer>
+        <p>{{ footer_data.copyright }}</p>
+        {% if footer_data.links %}
+        <nav class="footer-links" aria-label="Footer links">
+            {% for link in footer_data.links %}
+            <a href="{{ link.url }}" target="_blank">{{ link.text }}</a>
+            {% endfor %}
+        </nav>
+        {% endif %}
+    </footer>
+</body>
+</html>

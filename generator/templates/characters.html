@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Characters - {{ novel.title }}</title>
+    <link rel="icon" type="image/png" href="../../../static/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="../../../static/favicon.svg" />
+    <link rel="shortcut icon" href="../../../static/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../static/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../../../static/{{ 'style.css' | asset_url }}">
+
+    <!-- Theme Toggle Script -->
+    <script src="../../../static/{{ 'theme-toggle.js' | asset_url }}"></script>
+    <script src="../../../static/{{ 'spoiler-gate.js' | asset_url }}"></script>
+</head>
+<body>
+    <header>
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a href="../../../">Home</a>
+            <span class="breadcrumb-separator">></span>
+            <a href="../toc/">{{ novel.title }}</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="current-page">Characters</span>
+        </nav>
+        <h1>{{ novel.title }} - Characters</h1>
+    </header>
+    <main>
+        <div class="spoiler-gate-notice" id="spoiler-notice">
+            Character details are filtered based on your reading progress.
+        </div>
+
+        {% if characters %}
+        <div class="characters-grid">
+            {% for char in characters %}
+            <a href="{{ char.slug }}/" class="character-card" data-spoiler-level="{{ char.spoiler_level|default(0) }}">
+                {% if char.image %}
+                <img src="../../../{{ char.image }}" alt="{{ char.name }}" class="character-card-image" loading="lazy">
+                {% endif %}
+                <div class="character-card-name">{{ char.name }}</div>
+                <div class="character-card-desc">{{ char.description }}</div>
+                {% if char.tags %}
+                <div class="character-card-tags">
+                    {% for tag in char.tags %}
+                    <span class="tag tag-small">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+            <p>No characters found.</p>
+        {% endif %}
+    </main>
+    <footer>
+        <p>{{ footer_data.copyright }}</p>
+        {% if footer_data.links %}
+        <nav class="footer-links" aria-label="Footer links">
+            {% for link in footer_data.links %}
+            <a href="{{ link.url }}" target="_blank">{{ link.text }}</a>
+            {% endfor %}
+        </nav>
+        {% endif %}
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.initSpoilerGate) {
+                window.initSpoilerGate('{{ novel.slug }}');
+            }
+        });
+    </script>
+</body>
+</html>

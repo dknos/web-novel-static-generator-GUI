@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tag: {{ tag_name }} - {{ novel.title }}</title>
+    <link rel="icon" type="image/png" href="../../../../../static/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="../../../../../static/favicon.svg" />
+    <link rel="shortcut icon" href="../../../../../static/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../../../static/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="ocwn.net" />
+    <link rel="manifest" href="../../../../../static/site.webmanifest" />
+    <link rel="stylesheet" href="../../../../../static/{{ 'style.css' | asset_url }}">
+    
+    <!-- Theme Toggle Script -->
+    <script src="../../../../../static/{{ 'theme-toggle.js' | asset_url }}"></script>
+</head>
+<body>
+    <header>
+        <nav aria-label="Tag page navigation">
+            <a href="../">← All Tags</a>
+            <a href="../../toc/">← Table of Contents</a>
+        </nav>
+        <h1>{{ novel.title }}</h1>
+        {% if available_languages and available_languages|length > 1 %}
+        <div class="language-switcher" role="group" aria-label="Language selection">
+            <h3>Languages:</h3>
+            {% for lang in available_languages %}
+                {% if lang == current_language %}
+                    <span class="current-language">{{ lang|upper }}</span>
+                {% else %}
+                    {% if cross_lang_tags and cross_lang_tags.get(lang) %}
+                        <a href="../../../{{ lang }}/tags/{{ cross_lang_tags[lang] }}/">{{ lang|upper }}</a>
+                    {% else %}
+                        <span class="language-unavailable">{{ lang|upper }}</span>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        <h2>Tag: <span class="tag-name">{{ tag_name }}</span></h2>
+    </header>
+    <main>
+        <div class="tag-chapters">
+            <p class="tag-description">{{ chapters|length }} chapter{{ 's' if chapters|length != 1 else '' }} tagged with "{{ tag_name }}"</p>
+            
+            <div class="chapter-list">
+                {% for chapter in chapters %}
+                <a href="../../{{ chapter.id }}/" class="chapter-item">
+                    <h3>{{ chapter.title }}</h3>
+                    <span class="chapter-id">{{ chapter.id }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2025 {{ novel.title }}</p>
+    </footer>
+</body>
+</html>

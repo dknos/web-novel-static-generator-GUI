@@ -1,0 +1,187 @@
+# Global site configuration
+site_name: "Web Novel Collection"
+site_description: "A collection of translated web novels and original stories"
+site_url: "https://oekaki-connect.github.io/web-novel"  # Update this to your actual site URL
+site_author: "Site Owner Name"
+
+# Multi-language support
+languages:
+  available: ["en", "jp"]  # Available languages for the site
+
+# Social media embeds (Open Graph / Twitter Cards)
+social_embeds:
+  # Default image for the site (used when no story/chapter image is specified)
+  default_image: "/static/images/site-default-social.jpg"
+  
+  # Default title prefix/suffix for social embeds
+  title_format: "{title} | Web Novel Collection"
+  
+  # Default description if none provided
+  default_description: "Read translated web novels and original stories"
+  
+  # Twitter handle (without @)
+  twitter_handle: "your_twitter_handle"
+  
+  # Facebook App ID (optional)
+  facebook_app_id: ""
+
+# SEO and indexing
+seo:
+  # Allow search engines to index the site by default
+  allow_indexing: true
+  
+  # Generate robots.txt
+  generate_robots_txt: true
+  
+  # Generate sitemap.xml
+  generate_sitemap: true
+
+# RSS feeds
+rss:
+  # Generate RSS feeds
+  generate_feeds: true
+  
+  # Site-wide feed settings
+  site_feed:
+    title: "Web Novel Collection - Latest Chapters"
+    description: "Latest chapter updates from all novels"
+    
+  # Per-story feeds (generated automatically for each story)
+  story_feeds_enabled: true
+
+# Author pages configuration
+author_pages:
+  # Maximum number of recent chapters to show on author pages
+  # Set to 0 for unlimited chapters
+  max_recent_chapters: 20
+
+# EPUB generation configuration
+epub:
+  # Global flag to enable/disable EPUB generation
+  generate_enabled: true
+
+# Comments system (utterances)
+comments:
+  # Enable comments site-wide
+  enabled: true
+  
+  # GitHub repository for utterances (format: "username/repo-name")
+  utterances_repo: "Oekaki-Connect/web-novel-utterance-comments"
+  
+  # Utterances theme
+  utterances_theme: "github-light"
+  
+  # Issue term for utterances
+  utterances_issue_term: "pathname"
+  
+  # Label for utterances
+  utterances_label: "utterance-comment"
+
+# Image optimization configuration
+image_optimization:
+  # Enable automatic image optimization to WebP format
+  enabled: false
+  
+  # WebP quality (0-100, where 100 is lossless)
+  # Lower values = smaller files but lower quality
+  # Default: 100 (no compression)
+  quality: 85
+
+# New chapter tags configuration
+new_chapter_tags:
+  # Enable/disable (NEW!) tags on recently published chapters
+  enabled: true
+  
+  # Number of days to consider a chapter "new"
+  # Chapters published within this many days will show (NEW!) tag
+  threshold_days: 7
+
+# Accessibility features configuration
+accessibility:
+  # Enable accessibility features and validation
+  enabled: true
+  
+  # Require alt text for all images (warns about missing ones)
+  enforce_alt_text: true
+  
+  # Automatically add ARIA labels to navigation elements
+  auto_aria_labels: true
+  
+  # Enhance keyboard navigation support
+  keyboard_navigation: true
+  
+  # Generate accessibility reports during build
+  build_reports: true
+
+# Manga reader configuration
+manga:
+  # Seamless page transitions for single page mode
+  seamless_transitions:
+    enabled: true  # Disabled by default for instant page changes
+    duration: 0.15  # Transition duration in seconds (0.1-1.0)
+
+# Story metadata display configuration
+story_metadata:
+  # Show update schedule information on TOC
+  show_update_schedule: true
+  
+  # Show story statistics on TOC
+  show_story_stats: true
+  
+  # Show author contributions on TOC
+  show_author_contributions: true
+  
+  # Show last updated date on TOC
+  show_last_updated: true
+  
+  # Show license information on TOC
+  show_license_info: true
+
+# Front page configuration
+front_page:
+  # Story sorting method for non-featured stories
+  # Options:
+  #   "recent_update" (default) - Most recently updated novels appear first  
+  #   "alphabetical" - Sort stories alphabetically by title
+  #   "original" - Keep stories in their original order (as they appear in filesystem)
+  story_sort_method: "recent_update"
+  
+  # Manual sort order for featured novels (by slug)
+  # Novels listed here will appear first in the order specified
+  # All other novels will follow after, sorted according to story_sort_method
+  featured_order:
+    - tower-dungeon  # Example: tower-dungeon will always appear first
+  
+  # Primary story display configuration
+  primary_stories:
+    # Enable limiting primary stories shown in full detail
+    limit_enabled: true
+    
+    # Maximum number of stories to show in full detail (with cover art, description, etc.)
+    # Stories beyond this limit will be shown in simplified list form
+    # Only applies when limit_enabled is true
+    max_count: 2
+  
+  # Front page display configuration
+  title_override: ""  # Optional: Override the site name as the front page title (leave empty to use site_name)
+  subtitle: "Web Novel Static Site Generator Demo"        # Optional: Add a subtitle below the main title on the front page
+
+# Footer configuration
+footer:
+  # Default copyright text
+  copyright: "© 2025 Web Novel Collection"
+  
+  # Additional footer links
+  links:
+    - text: "Source Code"
+      url: "https://github.com/Oekaki-Connect/web-novel-static-generator"
+    - text: "ocwn.net"
+      url: "https://www.ocwn.net/"      
+    - text: "Join Our Discord"
+      url: "https://discord.gg/oekaki"
+    - text: "Follow on X"      
+      url: "https://x.com/OekakiConnect"
+    - text: "Oekaki Connect"
+      url: "https://www.oekakiconnect.net/"
+    - text: "Oekaki.io"
+      url: "https://www.oekaki.io/"
