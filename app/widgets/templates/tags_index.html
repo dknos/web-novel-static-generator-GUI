@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tags - {{ novel.title }}</title>
+    <link rel="icon" type="image/png" href="../../../static/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="../../../static/favicon.svg" />
+    <link rel="shortcut icon" href="../../../static/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../static/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="ocwn.net" />
+    <link rel="manifest" href="../../../static/site.webmanifest" />
+    <link rel="stylesheet" href="../../../static/{{ 'style.css' | asset_url }}">
+    
+    <!-- Theme Toggle Script -->
+    <script src="../../../static/{{ 'theme-toggle.js' | asset_url }}"></script>
+</head>
+<body>
+    <header>
+        <nav aria-label="Tags index navigation"><a href="../toc/">← Back to Table of Contents</a></nav>
+        <h1>{{ novel.title }}</h1>
+        {% if available_languages and available_languages|length > 1 %}
+        <div class="language-switcher" role="group" aria-label="Language selection">
+            <h3>Languages:</h3>
+            {% for lang in available_languages %}
+                {% if lang == current_language %}
+                    <span class="current-language">{{ lang|upper }}</span>
+                {% else %}
+                    <a href="../../{{ lang }}/tags/">{{ lang|upper }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        <h2>All Tags</h2>
+    </header>
+    <main>
+        {% if tags_data %}
+            <div class="tags-grid">
+                {% for tag, chapters in tags_data.items() %}
+                <a href="{{ tag_slug_map[tag] }}/" class="tag-card">
+                    <h3>{{ tag }}</h3>
+                    <p class="tag-count">{{ chapters|length }} chapter{{ 's' if chapters|length != 1 else '' }}</p>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No tags found for this novel in {{ current_language|upper }}.</p>
+        {% endif %}
+    </main>
+    <footer>
+        <p>&copy; 2025 {{ novel.title }}</p>
+    </footer>
+</body>
+</html>

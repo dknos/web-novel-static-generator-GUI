@@ -1,0 +1,23 @@
+site_name: My Novel Site
+site_description: A web novel collection
+site_url: https://example.com
+site_author: Author
+languages:
+  available:
+  - en
+rss:
+  generate_feeds: true
+  site_feed:
+    title: My Novel Site - Latest Chapters
+    description: Latest chapter updates
+  story_feeds_enabled: true
+epub:
+  generate_enabled: true
+comments:
+  enabled: false
+image_optimization:
+  enabled: false
+  quality: 85
+footer:
+  copyright: © My Novel Site
+  links: []

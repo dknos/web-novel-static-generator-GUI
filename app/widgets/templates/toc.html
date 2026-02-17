@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table of Contents - {{ novel.title }}</title>
+    <link rel="icon" type="image/png" href="../../../static/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="../../../static/favicon.svg" />
+    <link rel="shortcut icon" href="../../../static/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../static/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="ocwn.net" />
+    <link rel="manifest" href="../../../static/site.webmanifest" />
+    <link rel="stylesheet" href="../../../static/{{ 'style.css' | asset_url }}">
+    
+    <!-- SEO Meta Tags -->
+    {% if seo_meta_description %}
+    <meta name="description" content="{{ seo_meta_description }}">
+    {% endif %}
+    {% if seo_keywords %}
+    <meta name="keywords" content="{{ seo_keywords }}">
+    {% endif %}
+    {% if not allow_indexing %}
+    <meta name="robots" content="noindex, nofollow">
+    {% endif %}
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="{{ social_title }}">
+    <meta property="og:description" content="{{ social_description }}">
+    <meta property="og:image" content="{{ social_image }}">
+    <meta property="og:url" content="{{ social_url }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ site_name }}">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ social_title }}">
+    <meta name="twitter:description" content="{{ social_description }}">
+    <meta name="twitter:image" content="{{ social_image }}">
+    {% if twitter_handle %}
+    <meta name="twitter:site" content="@{{ twitter_handle }}">
+    {% endif %}
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ social_url }}">
+    
+    <!-- Theme Toggle Script -->
+    <script src="../../../static/{{ 'theme-toggle.js' | asset_url }}"></script>
+    
+    <!-- Reading Progress Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const novelSlug = '{{ novel.slug }}';
+            displayReadingProgress(novelSlug);
+            displayLatestChapterRead(novelSlug);
+        });
+        
+        function displayReadingProgress(novelSlug) {
+            const visitedKey = `visited_${novelSlug}`;
+            const visitedChapters = JSON.parse(localStorage.getItem(visitedKey) || '{}');
+            
+            console.log('Reading progress data:', visitedChapters);
+            
+            // Add read indicators to chapter links
+            const chapterLinks = document.querySelectorAll('.arc ul li a');
+            console.log('Found chapter links:', chapterLinks.length);
+            
+            chapterLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                const chapterId = href.split('/').filter(Boolean).pop();
+                
+                console.log(`Processing link: ${href} -> chapter ID: ${chapterId}`);
+                
+                if (visitedChapters[chapterId]) {
+                    console.log(`Adding indicator for chapter ${chapterId}:`, visitedChapters[chapterId]);
+                    const indicator = document.createElement('span');
+                    indicator.className = visitedChapters[chapterId].completed ? 'read-completed' : 'read-visited';
+                    indicator.textContent = visitedChapters[chapterId].completed ? ' ✓' : ' ○';
+                    
+                    // Insert indicator inside the link at the end
+                    link.appendChild(indicator);
+                } else {
+                    console.log(`No visit data found for chapter ${chapterId}`);
+                }
+            });
+        }
+        
+        function displayLatestChapterRead(novelSlug) {
+            const latestKey = `latest_${novelSlug}`;
+            const latestChapter = JSON.parse(localStorage.getItem(latestKey) || 'null');
+            
+            if (latestChapter) {
+                const tocNav = document.querySelector('.toc-nav');
+                if (tocNav) {
+                    const latestDiv = document.createElement('div');
+                    latestDiv.className = 'latest-chapter-read';
+                    
+                    const latestDate = new Date(latestChapter.completedAt).toLocaleDateString();
+                    latestDiv.innerHTML = `
+                        <h3>Continue Reading</h3>
+                        <p>Last completed: <a href="../${latestChapter.chapterId}/">${latestChapter.title}</a></p>
+                        <p class="completion-date">Finished on ${latestDate}</p>
+                    `;
+                    
+                    tocNav.parentNode.insertBefore(latestDiv, tocNav.nextSibling);
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a href="../../../">Home</a>
+            <span class="breadcrumb-separator">></span>
+            <span class="current-page">{{ novel.title }}</span>
+        </nav>
+        {% if novel.front_page and novel.front_page.cover_art %}
+        <div class="story-cover">
+            <img src="../../../{{ novel.front_page.cover_art }}" alt="{{ novel.title }} Cover" class="story-cover-image clickable-image" onclick="openImageModal(this)">
+        </div>
+        {% endif %}
+        <h1>{{ novel.title }}</h1>
+        {% if novel.status %}
+        <div class="story-status">
+            <span class="status-label">Status:</span>
+            <span class="status-value status-{{ novel.status }}">{{ novel.status|title }}</span>
+        </div>
+        {% endif %}
+        {% if story_length_count %}
+        <div class="story-stats">
+            <span class="stats-label">Total Length:</span>
+            <span class="stats-value">{{ "{:,}".format(story_length_count) }} {{ story_length_unit }}</span>
+        </div>
+        {% endif %}
+        {% if novel.tags %}
+        <div class="story-tags">
+            <span class="tags-label">Genres:</span>
+            <div class="tags">
+                {% for tag in novel.tags %}
+                <span class="tag story-tag">{{ tag }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if available_languages and available_languages|length > 1 %}
+        <div class="language-switcher" role="group" aria-label="Language selection">
+            <h3>Languages:</h3>
+            {% for lang in available_languages %}
+                {% if lang == current_language %}
+                    <span class="current-language" aria-current="page">{{ lang|upper }}</span>
+                {% else %}
+                    <a href="../../{{ lang }}/toc/" aria-label="Switch to {{ lang|upper }} language">{{ lang|upper }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if story_metadata %}
+        <section class="story-metadata">
+            <div class="metadata-grid">
+                {% if story_metadata.show_story_stats and (story_metadata.total_chapters or story_metadata.avg_per_chapter) %}
+                <div class="metadata-item">
+                    <h3>Story Statistics</h3>
+                    <div class="metadata-content">
+                        {% if story_metadata.total_chapters %}
+                        <span class="stat-item">{{ story_metadata.total_chapters }} chapters</span>
+                        {% endif %}
+                        {% if story_metadata.avg_per_chapter %}
+                        <span class="stat-item">{{ "{:,}".format(story_metadata.avg_per_chapter) }} avg {{ story_metadata.avg_unit }}/chapter</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if story_metadata.show_update_schedule and story_metadata.update_schedule %}
+                <div class="metadata-item">
+                    <h3>Update Schedule</h3>
+                    <div class="metadata-content">
+                        <span>{{ story_metadata.update_schedule }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if story_metadata.show_author_contributions and story_metadata.author_contributions %}
+                <div class="metadata-item">
+                    <h3>{% if story_metadata.author_contributions|length == 1 %}Author{% else %}Authors{% endif %}</h3>
+                    <div class="metadata-content">
+                        {% for author, chapter_count in story_metadata.author_contributions.items() %}
+                        {% if story_metadata.author_contributions|length == 1 %}
+                        <span class="author-item">{{ author }}</span>
+                        {% else %}
+                        <span class="author-item">{{ author }} ({{ chapter_count }})</span>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if story_metadata.show_license_info and story_metadata.license %}
+                <div class="metadata-item">
+                    <h3>License</h3>
+                    <div class="metadata-content">
+                        <span>{{ story_metadata.license }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if story_metadata.show_last_updated and story_metadata.last_updated %}
+            <div class="last-updated-footer">
+                <span class="last-updated-text">{{ story_metadata.last_updated }}</span>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+        
+        <h2>Table of Contents</h2>
+        {% if novel_config.get('navigation', {}).get('show_tags_link', True) %}
+        <nav class="toc-nav" aria-label="Story navigation">
+            <a href="../tags/" class="tags-link">Browse by Tags</a>
+        </nav>
+        {% endif %}
+    </header>
+    <main>
+        {% for arc in novel.arcs %}
+        <section class="arc">
+            {% if arc.cover_art %}
+            <div class="arc-cover">
+                <img src="../../../{{ arc.cover_art }}" alt="{{ arc.title }} Cover" class="arc-cover-image clickable-image" onclick="openImageModal(this)">
+            </div>
+            {% endif %}
+            <div class="arc-content">
+                <h3>{{ arc.title }}</h3>
+                <ul aria-label="Chapters in {{ arc.title }}">
+                    {% for chapter in arc.chapters %}
+                    <li>
+                        <a href="../{{ chapter.id }}/" aria-label="Read {{ chapter.title }}">{{ chapter.title }}</a>
+                        {% if chapter.published %}
+                        <span class="chapter-date" aria-label="Published on {{ chapter.published | format_date_for_display }}">
+                            {% if chapter.published | is_chapter_new %}
+                            <span class="chapter-new" aria-label="Recently published">(NEW!) </span>
+                            {% endif %}
+                            {{ chapter.published | format_date_for_display }}
+                        </span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
+        {% endfor %}
+        
+        {% if download_links %}
+        <section class="downloads-section">
+            <h3>Downloads</h3>
+            <div class="download-links">
+                {% if download_links.story_pdf %}
+                <a href="{{ download_links.story_pdf }}" class="download-link pdf-link" download>
+                    📄 Download Full Story (PDF)
+                </a>
+                {% endif %}
+                {% if download_links.story_epub %}
+                <a href="{{ download_links.story_epub }}" class="download-link epub-link" download>
+                    Download Full Story (EPUB)
+                </a>
+                {% endif %}
+                {% if download_links.arcs %}
+                <div class="arc-downloads">
+                    <h4>Download by Arc:</h4>
+                    {% for arc in download_links.arcs %}
+                    <div class="arc-download-group">
+                        <span class="arc-download-title">{{ arc.title }}:</span>
+                        {% if arc.pdf %}
+                        <a href="{{ arc.pdf }}" class="download-link arc-pdf-link" download>PDF</a>
+                        {% endif %}
+                        {% if arc.epub %}
+                        <a href="{{ arc.epub }}" class="download-link arc-epub-link" download>EPUB</a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </section>
+        {% endif %}
+        
+        {% if comments_enabled %}
+        <div class="comments-section">
+            <h3>Comments</h3>
+            <div id="utterances-container" 
+                 data-repo="{{ comments_repo }}"
+                 data-issue-term="{{ comments_issue_term }}"
+                 data-label="{{ comments_label }}">
+            </div>
+        </div>
+        {% endif %}
+    </main>
+    <footer>
+        <p>{{ footer_data.copyright }}</p>
+        {% if footer_data.links %}
+        <nav class="footer-links">
+            {% for link in footer_data.links %}
+            <a href="{{ link.url }}" target="_blank">{{ link.text }}</a>
+            {% endfor %}
+        </nav>
+        {% endif %}
+        {% if footer_data.additional_text %}
+        <p class="footer-additional">{{ footer_data.additional_text }}</p>
+        {% endif %}
+    </footer>
+    
+    <!-- Image Modal -->
+    <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+        <div class="modal-content">
+            <img id="modalImage" class="modal-image" alt="Full size image">
+        </div>
+    </div>
+
+    <script>
+        function openImageModal(imgElement) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            
+            modal.style.display = 'flex';
+            modalImg.src = imgElement.src;
+            modalImg.alt = imgElement.alt;
+            
+            // Reset any inline styles that might interfere with CSS
+            modalImg.style.width = 'auto';
+            modalImg.style.height = 'auto';
+            modalImg.style.maxWidth = '100%';
+            modalImg.style.maxHeight = '100%';
+            
+            // Prevent body scrolling when modal is open
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.style.display = 'none';
+            
+            // Restore body scrolling
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when pressing Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+    </script>
+</body>
+</html>
+

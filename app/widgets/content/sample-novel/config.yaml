@@ -1,0 +1,22 @@
+title: Sample Novel
+description: A sample novel to get you started.
+slug: sample-novel
+primary_language: en
+status: ongoing
+tags:
+- sample
+author:
+  name: Author Name
+languages:
+  default: en
+  available:
+  - en
+downloads:
+  epub_enabled: true
+comments:
+  enabled: false
+arcs:
+- title: Arc 1
+  chapters:
+  - id: chapter-1
+    title: 'Chapter 1: Getting Started'
