@@ -1,5 +1,14 @@
 # Changelog
 
+
+## [2.0.1] - 2026-02-17
+
+### Improvements
+- Added optional incremental build mode (`--incremental`) with build input fingerprint caching to skip no-op rebuilds.
+- Added local search engine script (`static/lunr.min.js`) and search boot checks to avoid CDN/runtime failures.
+- Added optional Gradio Studio auth guardrails via `--require-auth` and `WNSG_STUDIO_USER`/`WNSG_STUDIO_PASSWORD`.
+- Added initial automated tests (`pytest`) and GitHub Actions CI workflow with generator smoke check.
+
 ## [2.0.0] - 2026-02-16
 
 Major feature release adding 13 new features across reader UX, collaboration tooling, and content management, plus infrastructure improvements and standalone launchers.

@@ -58,10 +58,77 @@ env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
 
 # Global asset map for cache busting
 ASSET_MAP = {}
+BUILD_CACHE_FILE = os.path.join(BUILD_DIR, ".build_cache.json")
 
 def asset_url(filename):
     """Convert asset filename to cache-busted version if available"""
     return ASSET_MAP.get(filename, filename)
+
+
+def _iter_files_for_fingerprint(paths):
+    """Yield file paths for build fingerprinting."""
+    for path in paths:
+        if os.path.isfile(path):
+            yield os.path.abspath(path)
+            continue
+        if not os.path.isdir(path):
+            continue
+
+        for root, _, files in os.walk(path):
+            for name in sorted(files):
+                yield os.path.abspath(os.path.join(root, name))
+
+
+def compute_build_fingerprint(include_drafts=False, include_scheduled=False, no_epub=False,
+                              optimize_images=False, no_minify=False):
+    """Compute a stable fingerprint representing current build inputs and key flags."""
+    tracked_paths = [CONTENT_DIR, TEMPLATES_DIR, STATIC_DIR, PAGES_DIR, 'site_config.yaml', 'authors.yaml', __file__]
+
+    hash_obj = hashlib.sha256()
+    flags = {
+        'include_drafts': include_drafts,
+        'include_scheduled': include_scheduled,
+        'no_epub': no_epub,
+        'optimize_images': optimize_images,
+        'no_minify': no_minify,
+    }
+    hash_obj.update(json.dumps(flags, sort_keys=True).encode('utf-8'))
+
+    for file_path in _iter_files_for_fingerprint(tracked_paths):
+        try:
+            stat = os.stat(file_path)
+            rel_path = os.path.relpath(file_path, start=os.getcwd())
+            hash_obj.update(rel_path.encode('utf-8'))
+            hash_obj.update(str(stat.st_size).encode('utf-8'))
+            hash_obj.update(str(int(stat.st_mtime_ns)).encode('utf-8'))
+        except OSError:
+            continue
+
+    return hash_obj.hexdigest()
+
+
+def should_skip_build(current_fingerprint):
+    """Return True when fingerprint matches previous successful build."""
+    if not os.path.exists(BUILD_CACHE_FILE):
+        return False
+
+    try:
+        with open(BUILD_CACHE_FILE, 'r', encoding='utf-8') as cache_file:
+            payload = json.load(cache_file)
+        return payload.get('fingerprint') == current_fingerprint
+    except (OSError, json.JSONDecodeError):
+        return False
+
+
+def persist_build_fingerprint(fingerprint):
+    """Persist successful build fingerprint to cache file."""
+    os.makedirs(BUILD_DIR, exist_ok=True)
+    payload = {
+        'fingerprint': fingerprint,
+        'updated_at': datetime.datetime.now().isoformat(),
+    }
+    with open(BUILD_CACHE_FILE, 'w', encoding='utf-8') as cache_file:
+        json.dump(payload, cache_file, indent=2)
 
 # Register the asset_url filter
 env.filters['asset_url'] = asset_url
@@ -844,8 +911,13 @@ def collect_author_contributions(all_novels_data):
         novel_title = novel.get('title', novel_slug)
         novel_config = load_novel_config(novel_slug)
         
-        # Check story-level author
-        story_author = novel_config.get('author', {}).get('name')
+        # Check story-level author (supports either string or object schema)
+        story_author = novel_config.get('author')
+        if isinstance(story_author, dict):
+            story_author = story_author.get('name')
+        elif story_author is not None:
+            story_author = str(story_author).strip()
+
         if story_author:
             if story_author not in author_contributions:
                 author_contributions[story_author] = {'stories': [], 'chapters': []}
@@ -2845,7 +2917,7 @@ def copy_static_assets(enable_minification=False):
             'keyboard-nav.js', 'chapter-nav.js', 'password-unlock.js',
             'progress-export.js', 'footnote-preview.js',
             'reading-modes.js', 'glossary-links.js', 'spoiler-gate.js',
-            'search.js',
+            'search.js', 'lunr.min.js',
         ]
         
         for root, dirs, files in os.walk(STATIC_DIR):
@@ -3195,7 +3267,8 @@ def render_template(template_name, novel_slug=None, site_config=None, novel_conf
     
     return template.render(**kwargs)
 
-def build_site(include_drafts=False, include_scheduled=False, no_epub=False, optimize_images=False, serve_mode=False, serve_port=8000, no_minify=False):
+def build_site(include_drafts=False, include_scheduled=False, no_epub=False, optimize_images=False,
+               serve_mode=False, serve_port=8000, no_minify=False, incremental=False):
     global INCLUDE_DRAFTS, INCLUDE_SCHEDULED, ASSET_MAP
     INCLUDE_DRAFTS = include_drafts
     INCLUDE_SCHEDULED = include_scheduled
@@ -3214,6 +3287,19 @@ def build_site(include_drafts=False, include_scheduled=False, no_epub=False, opt
     else:
         enable_minification = site_minify_enabled and should_minify(serve_mode=serve_mode, no_minify=no_minify)
     
+    fingerprint = None
+    if incremental:
+        fingerprint = compute_build_fingerprint(
+            include_drafts=include_drafts,
+            include_scheduled=include_scheduled,
+            no_epub=no_epub,
+            optimize_images=optimize_images,
+            no_minify=no_minify,
+        )
+        if should_skip_build(fingerprint):
+            print("No content/config/template changes detected. Skipping build (--incremental).")
+            return
+
     print("Building site...")
     if os.path.exists(BUILD_DIR):
         # On Windows, retry deletion if it fails due to file locks
@@ -3508,12 +3594,12 @@ def build_site(include_drafts=False, include_scheduled=False, no_epub=False, opt
             author_name = author_info.get('name', username)
             contributions = author_contributions.get(author_name, {'stories': [], 'chapters': []})
             
+            # Limit chapters based on site configuration
+            max_chapters = site_config.get('author_pages', {}).get('max_recent_chapters', 20)
+
             # Sort chapters by publication date (most recent first)
             if contributions['chapters']:
                 contributions['chapters'].sort(key=lambda x: x.get('published', '1900-01-01'), reverse=True)
-                
-                # Limit chapters based on site configuration
-                max_chapters = site_config.get('author_pages', {}).get('max_recent_chapters', 20)
                 if max_chapters > 0:
                     contributions['chapters'] = contributions['chapters'][:max_chapters]
             
@@ -3643,8 +3729,8 @@ def build_site(include_drafts=False, include_scheduled=False, no_epub=False, opt
 
             # Render chapter pages for this novel/language
             all_chapters = []
-            for arc in novel["arcs"]:
-                all_chapters.extend(arc["chapters"])
+            for arc in filtered_novel.get("arcs", []):
+                all_chapters.extend(arc.get("chapters", []))
 
             # Pre-load chapter metadata for related chapters and TOC tag chips
             all_chapters_metadata = []
@@ -4220,6 +4306,8 @@ def build_site(include_drafts=False, include_scheduled=False, no_epub=False, opt
     # Optimize images if enabled or forced
     optimize_all_images(site_config, optimize_images)
 
+    if incremental and fingerprint:
+        persist_build_fingerprint(fingerprint)
     print("Site built.")
 
 def check_broken_links():
@@ -6039,6 +6127,8 @@ if __name__ == "__main__":
                         help='Convert images to WebP format during build')
     parser.add_argument('--no-minify', action='store_true',
                         help='Disable asset minification (HTML/CSS/JS) for debugging')
+    parser.add_argument('--incremental', action='store_true',
+                        help='Skip full build when no source/config/template changes are detected')
     args = parser.parse_args()
     
     # Handle --clean flag
@@ -6053,9 +6143,10 @@ if __name__ == "__main__":
     # Handle --watch flag (watch and rebuild without server)
     if args.watch:
         # Build site once first
-        build_site(include_drafts=args.include_drafts, 
+        build_site(include_drafts=args.include_drafts,
                    no_epub=True,  # Skip EPUB for faster rebuilds
-                   optimize_images=False)  # Skip optimization for speed
+                   optimize_images=False,
+                   incremental=args.incremental)  # Skip optimization for speed
         # Start watching for changes
         watch_and_rebuild(include_drafts=args.include_drafts, include_scheduled=args.include_scheduled)
         exit(0)
@@ -6063,9 +6154,10 @@ if __name__ == "__main__":
     # Handle --serve flag (build, serve, and watch with live reload)
     if args.serve:
         # Build site once first
-        build_site(include_drafts=args.include_drafts, 
+        build_site(include_drafts=args.include_drafts,
                    no_epub=True,  # Skip EPUB for faster rebuilds
-                   optimize_images=False)  # Skip optimization for speed
+                   optimize_images=False,
+                   incremental=args.incremental)  # Skip optimization for speed
         # Start development server
         start_development_server(args.serve, include_drafts=args.include_drafts, include_scheduled=args.include_scheduled)
         exit(0)
@@ -6075,7 +6167,8 @@ if __name__ == "__main__":
                include_scheduled=args.include_scheduled,
                no_epub=args.no_epub,
                optimize_images=args.optimize_images,
-               no_minify=args.no_minify)
+               no_minify=args.no_minify,
+               incremental=args.incremental)
     
     # Generate statistics report if requested
     if args.stats:

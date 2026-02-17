@@ -6,9 +6,18 @@
     var lunrIndex = null;
     var searchData = null;
 
+    function isSearchEngineAvailable() {
+        return typeof lunr === 'function';
+    }
+
     function loadSearchIndex() {
         var resultsEl = document.getElementById('search-results');
         if (!resultsEl) return;
+
+        if (!isSearchEngineAvailable()) {
+            resultsEl.innerHTML = '<p class="search-loading">Search engine failed to load. Ensure <code>lunr.min.js</code> is available in <code>/static/</code>.</p>';
+            return;
+        }
 
         resultsEl.innerHTML = '<p class="search-loading">Loading search index...</p>';
 

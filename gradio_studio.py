@@ -5,6 +5,7 @@ Launch with:  python gradio_studio.py [--port PORT] [--share]
 import argparse
 import os
 import sys
+import secrets
 
 # Add studio and generator to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'studio'))
@@ -23,6 +24,26 @@ from panels import (
 from editor import load_chapter, save_chapter, preview_markdown
 from builder import run_build, run_preview_server
 
+
+
+
+def resolve_auth_credentials():
+    """Resolve optional Gradio auth credentials from environment variables."""
+    user = os.environ.get('WNSG_STUDIO_USER', '').strip()
+    password = os.environ.get('WNSG_STUDIO_PASSWORD', '')
+    if not user and not password:
+        return None
+
+    if not user or not password:
+        raise ValueError('Both WNSG_STUDIO_USER and WNSG_STUDIO_PASSWORD must be set together.')
+
+    if len(password) < 8:
+        raise ValueError('WNSG_STUDIO_PASSWORD must be at least 8 characters long.')
+
+    if secrets.compare_digest(password.lower(), 'changeme123'):
+        raise ValueError('WNSG_STUDIO_PASSWORD must not use the default placeholder value.')
+
+    return [(user, password)]
 
 # ------------------------------------------------------------------
 # Helpers
@@ -303,6 +324,7 @@ def build_build_tab():
             opt_no_epub = gr.Checkbox(label='No EPUB', value=False)
             opt_optimize = gr.Checkbox(label='Optimize images', value=False)
             opt_no_minify = gr.Checkbox(label='No minify', value=False)
+            opt_incremental = gr.Checkbox(label='Incremental build', value=True)
 
         with gr.Row():
             build_btn = gr.Button("Build Site", variant='primary')
@@ -312,10 +334,10 @@ def build_build_tab():
         build_output = gr.Textbox(label='Build Output', lines=15, interactive=False)
         preview_msg = gr.Textbox(label='Preview Server', interactive=False)
 
-        def on_build(clean, drafts, scheduled, no_epub, optimize, no_minify):
+        def on_build(clean, drafts, scheduled, no_epub, optimize, no_minify, incremental):
             success, output = run_build(
                 clean=clean, include_drafts=drafts, include_scheduled=scheduled,
-                no_epub=no_epub, optimize_images=optimize, no_minify=no_minify,
+                no_epub=no_epub, optimize_images=optimize, no_minify=no_minify, incremental=incremental,
             )
             status = 'Build succeeded.' if success else 'Build FAILED.'
             return f'{status}\n\n{output}'
@@ -339,7 +361,7 @@ def build_build_tab():
 
         build_btn.click(
             on_build,
-            inputs=[opt_clean, opt_drafts, opt_scheduled, opt_no_epub, opt_optimize, opt_no_minify],
+            inputs=[opt_clean, opt_drafts, opt_scheduled, opt_no_epub, opt_optimize, opt_no_minify, opt_incremental],
             outputs=[build_output],
         )
         preview_start_btn.click(on_start_preview, outputs=[preview_msg])
@@ -422,7 +444,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Web Novel Gradio Studio')
     parser.add_argument('--port', type=int, default=7860, help='Port to run on')
     parser.add_argument('--share', action='store_true', help='Create public share link')
+    parser.add_argument('--require-auth', action='store_true',
+                        help='Require auth using WNSG_STUDIO_USER/WNSG_STUDIO_PASSWORD env vars')
     args = parser.parse_args()
 
     app = create_app()
-    app.launch(server_port=args.port, share=args.share)
+
+    auth_credentials = None
+    if args.require_auth or args.share:
+        auth_credentials = resolve_auth_credentials()
+        if auth_credentials is None and args.share:
+            raise ValueError('Refusing to start with --share without credentials. Set WNSG_STUDIO_USER and WNSG_STUDIO_PASSWORD.')
+
+    app.launch(server_port=args.port, share=args.share, auth=auth_credentials)
