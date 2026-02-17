@@ -10,7 +10,7 @@ def get_generate_script():
 
 
 def run_build(clean=False, include_drafts=False, include_scheduled=False,
-              no_epub=False, optimize_images=False, no_minify=False):
+              no_epub=False, optimize_images=False, no_minify=False, incremental=False):
     """Run the site generator and return (success, output).
 
     Returns:
@@ -31,6 +31,8 @@ def run_build(clean=False, include_drafts=False, include_scheduled=False,
         cmd.append('--optimize-images')
     if no_minify:
         cmd.append('--no-minify')
+    if incremental:
+        cmd.append('--incremental')
 
     try:
         result = subprocess.run(

@@ -9,7 +9,7 @@ A Python-based static website generator designed for hosting serialized web fict
 ## What's New in This Fork
 
 ### Reader Experience
-- **Full-Text Search** — Client-side search powered by lunr.js with story/language filters and highlighted excerpts
+- **Full-Text Search** — Client-side search powered by a locally hosted lunr-compatible engine with story/language filters and highlighted excerpts
 - **Reading Modes** — Typewriter (focused paragraph), Focus (distraction-free), and Paged (book-like pagination) modes
 - **Continue Reading + Progress Export/Import** — Smart "continue where you left off" widgets on the homepage and TOC, plus JSON export/import of all reading progress
 - **Better Chapter Navigation** — Scroll position memory, "next unread" chapter button, and optional auto-advance to the next chapter on completion
@@ -47,10 +47,20 @@ Or double-click `Start Studio.bat` / build `Web Novel Studio.exe` via `build_exe
 ### Generate Site
 ```
 cd generator
-python generate.py [--clean] [--include-drafts] [--include-scheduled] [--no-epub] [--optimize-images] [--no-minify] [--serve PORT]
+python generate.py [--clean] [--include-drafts] [--include-scheduled] [--no-epub] [--optimize-images] [--no-minify] [--incremental] [--serve PORT]
 ```
 
 ---
+
+#### Studio Authentication (recommended for collaboration)
+Set credentials before launching shared studio sessions:
+```bash
+export WNSG_STUDIO_USER=admin
+export WNSG_STUDIO_PASSWORD='replace-with-strong-password'
+python gradio_studio.py --share --require-auth
+```
+`--share` now requires credentials to avoid exposing an unauthenticated editor.
+
 
 ## New Content Formats
 
